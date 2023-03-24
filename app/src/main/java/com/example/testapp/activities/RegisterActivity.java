@@ -100,6 +100,10 @@ public class RegisterActivity extends AppCompatActivity {
         return Base64.encodeToString(bytes, Base64.DEFAULT);
     }
 
+
+
+
+
     private final ActivityResultLauncher<Intent> pickImage = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
