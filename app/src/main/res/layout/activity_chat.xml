@@ -78,6 +78,20 @@
         android:layout_marginTop="@dimen/_12sdp"
         app:layout_constraintTop_toBottomOf="@id/imageBack"/>
 
+    <TextView
+        android:id="@+id/textOnline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/viewSupporter"
+        android:background="#008000"
+        android:text="Онлайн"
+        android:gravity="center"
+        android:padding="@dimen/_2sdp"
+        android:textSize="@dimen/_10ssp"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chatRecyclerView"
         android:layout_width="match_parent"
@@ -86,11 +100,11 @@
         android:orientation="vertical"
         android:overScrollMode="never"
         android:padding="@dimen/_20sdp"
-        app:stackFromEnd="true"
         android:visibility="gone"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="@id/viewBackground"
-        app:layout_constraintTop_toBottomOf="@id/viewSupporter" />
+        app:layout_constraintTop_toBottomOf="@id/textOnline"
+        app:stackFromEnd="true"/>
 
     <ProgressBar
         android:id="@+id/progressBar"

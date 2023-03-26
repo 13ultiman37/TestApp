@@ -20,7 +20,16 @@
         <deviceKey>
           <Key>
             <type value="VIRTUAL_DEVICE_PATH" />
-            <value value="C:\Users\xperi\.android\avd\Pixel_6_API_33_3.avd" />
+            <value value="C:\Users\xperi\.android\avd\Pixel_6_API_33_2.avd" />
+          </Key>
+        </deviceKey>
+      </Target>
+      <Target>
+        <type value="QUICK_BOOT_TARGET" />
+        <deviceKey>
+          <Key>
+            <type value="VIRTUAL_DEVICE_PATH" />
+            <value value="C:\Users\xperi\.android\avd\Pixel_6_API_33_1.avd" />
           </Key>
         </deviceKey>
       </Target>
