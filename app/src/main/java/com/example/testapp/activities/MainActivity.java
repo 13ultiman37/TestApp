@@ -1,12 +1,23 @@
 package com.example.testapp.activities;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.PackageManagerCompat;
 
 import com.example.testapp.adapters.RecentConversationsAdapter;
 import com.example.testapp.databinding.ActivityMainBinding;
@@ -35,13 +46,22 @@ public class MainActivity extends BaseActivity implements ConversationListener {
     private List<ChatMessage> conversations;
     private RecentConversationsAdapter conversationsAdapter;
     private FirebaseFirestore database;
+    private String[] PERMISSIONS;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        PERMISSIONS = new String[]{
+                Manifest.permission.POST_NOTIFICATIONS,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        };
         preferenceManager = new PreferenceManager(getApplicationContext());
+        if (hasPermissions(getApplicationContext(), PERMISSIONS) == false){
+            showPermissionsAlert();
+        }
         init();
         loadUserDetails();
         getToken();
@@ -49,32 +69,70 @@ public class MainActivity extends BaseActivity implements ConversationListener {
         listenConversations();
     }
 
-    private void init(){
+    private void showPermissionsAlert() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setMessage("Для полноценной и корректной работы приложения необходимо предоставить следующие разрешения: \n - Доступ к геоданным\n - Доступ к отправке уведомлений");
+        builder.setNegativeButton("Отказаться", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                finish();
+            }
+        });
+        builder.setPositiveButton("Предоставить", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if (!hasPermissions(MainActivity.this, PERMISSIONS)) {
+                    ActivityCompat.requestPermissions(MainActivity.this, PERMISSIONS, 1);
+                }
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private boolean hasPermissions(Context context, String... PERMISSIONS) {
+        if (context != null && PERMISSIONS != null) {
+            for (String permission : PERMISSIONS) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+
+    private void init() {
         conversations = new ArrayList<>();
         conversationsAdapter = new RecentConversationsAdapter(conversations, this);
         binding.conversationsRecyclerView.setAdapter(conversationsAdapter);
         database = FirebaseFirestore.getInstance();
     }
 
-    private void setListeners(){
+    private void setListeners() {
         binding.imageSignOut.setOnClickListener(v -> signOut());
         binding.fabNewChat.setOnClickListener(v -> {
             startActivity(new Intent(getApplicationContext(), UsersActivity.class));
         });
     }
 
-    private void loadUserDetails(){
+    private void loadUserDetails() {
         binding.textName.setText(preferenceManager.getString(Constants.KEY_NAME));
         byte[] bytes = Base64.decode(preferenceManager.getString(Constants.KEY_IMAGE), Base64.DEFAULT);
         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
         binding.imageProfile.setImageBitmap(bitmap);
     }
 
-    private void showToast(String message){
+    private void showToast(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 
-    private void listenConversations(){
+    private void listenConversations() {
         database.collection(Constants.KEY_COLLECTION_CONVERSATIONS)
                 .whereEqualTo(Constants.KEY_SENDER_ID, preferenceManager.getString(Constants.KEY_USER_ID))
                 .addSnapshotListener(eventListener);
@@ -85,18 +143,18 @@ public class MainActivity extends BaseActivity implements ConversationListener {
 
 
     private final EventListener<QuerySnapshot> eventListener = (value, error) -> {
-        if(error!=null){
+        if (error != null) {
             return;
         }
-        if (value != null){
-            for (DocumentChange documentChange : value.getDocumentChanges()){
-                if(documentChange.getType() == DocumentChange.Type.ADDED){
+        if (value != null) {
+            for (DocumentChange documentChange : value.getDocumentChanges()) {
+                if (documentChange.getType() == DocumentChange.Type.ADDED) {
                     String senderId = documentChange.getDocument().getString(Constants.KEY_SENDER_ID);
                     String receiverId = documentChange.getDocument().getString(Constants.KEY_RECEIVER_ID);
                     ChatMessage chatMessage = new ChatMessage();
                     chatMessage.senderId = senderId;
                     chatMessage.receivedId = receiverId;
-                    if (preferenceManager.getString(Constants.KEY_USER_ID).equals(senderId)){
+                    if (preferenceManager.getString(Constants.KEY_USER_ID).equals(senderId)) {
                         chatMessage.conversationId = documentChange.getDocument().getString(Constants.KEY_RECEIVER_ID);
                         chatMessage.conversationName = documentChange.getDocument().getString(Constants.KEY_RECEIVER_NAME);
                         chatMessage.conversationImage = documentChange.getDocument().getString(Constants.KEY_RECEIVER_IMAGE);
@@ -109,10 +167,10 @@ public class MainActivity extends BaseActivity implements ConversationListener {
                     chatMessage.dateObject = documentChange.getDocument().getDate(Constants.KEY_TIMESTAMP);
                     conversations.add(chatMessage);
                 } else if (documentChange.getType() == DocumentChange.Type.MODIFIED) {
-                    for (int i = 0; i < conversations.size(); i++){
+                    for (int i = 0; i < conversations.size(); i++) {
                         String senderId = documentChange.getDocument().getString(Constants.KEY_SENDER_ID);
                         String receiverId = documentChange.getDocument().getString(Constants.KEY_RECEIVER_ID);
-                        if (conversations.get(i).senderId.equals(senderId) && conversations.get(i).receivedId.equals(receiverId)){
+                        if (conversations.get(i).senderId.equals(senderId) && conversations.get(i).receivedId.equals(receiverId)) {
                             conversations.get(i).message = documentChange.getDocument().getString(Constants.KEY_LAST_MESSAGE);
                             conversations.get(i).dateObject = documentChange.getDocument().getDate(Constants.KEY_TIMESTAMP);
                             break;
@@ -128,11 +186,12 @@ public class MainActivity extends BaseActivity implements ConversationListener {
         }
     };
 
-    private void getToken(){
+    private void getToken() {
         FirebaseMessaging.getInstance().getToken().addOnSuccessListener(this::updateToken);
     }
 
-    private void updateToken(String token){
+    private void updateToken(String token) {
+        preferenceManager.putString(Constants.KEY_FCM_TOKEN, token);
         FirebaseFirestore database = FirebaseFirestore.getInstance();
         DocumentReference documentReference =
                 database.collection(Constants.KEY_COLLECTION_USERS).document(
@@ -143,7 +202,7 @@ public class MainActivity extends BaseActivity implements ConversationListener {
     }
 
 
-    private void signOut(){
+    private void signOut() {
         showToast("Signing out...");
         FirebaseFirestore database = FirebaseFirestore.getInstance();
         DocumentReference documentReference =
@@ -167,4 +226,6 @@ public class MainActivity extends BaseActivity implements ConversationListener {
         intent.putExtra(Constants.KEY_USER, user);
         startActivity(intent);
     }
+
+
 }
