@@ -3,5 +3,5 @@ package com.example.testapp.models;
 import java.io.Serializable;
 
 public class User implements Serializable {
-    public String name, image, email, token, nickname, id;
+    public String name, image, token, nickname, id;
 }
