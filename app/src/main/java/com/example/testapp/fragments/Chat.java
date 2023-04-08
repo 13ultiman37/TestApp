@@ -4,44 +4,29 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentFactory;
-import androidx.viewpager2.widget.ViewPager2;
-
 import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
-
-import com.example.testapp.R;
 import com.example.testapp.activities.ChatActivity;
-import com.example.testapp.activities.LoginActivity;
-import com.example.testapp.activities.MainActivity;
 import com.example.testapp.activities.UsersActivity;
 import com.example.testapp.adapters.RecentConversationsAdapter;
-import com.example.testapp.adapters.ViewPagerAdapter;
-import com.example.testapp.databinding.ActivityMainBinding;
 import com.example.testapp.databinding.FragmentChatBinding;
-import com.example.testapp.databinding.FragmentFriendsBinding;
 import com.example.testapp.listeners.ConversationListener;
 import com.example.testapp.models.ChatMessage;
 import com.example.testapp.models.User;
 import com.example.testapp.utilities.Constants;
 import com.example.testapp.utilities.PreferenceManager;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.messaging.FirebaseMessaging;
-
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 public class Chat extends Fragment implements ConversationListener {
@@ -76,14 +61,10 @@ public class Chat extends Fragment implements ConversationListener {
         database = FirebaseFirestore.getInstance();
     }
 
-
-
     private void loadUserDetails() {
         preferenceManager = new PreferenceManager(getActivity());
-        //binding.textName.setText(preferenceManager.getString(Constants.KEY_NAME));
         byte[] bytes = Base64.decode(preferenceManager.getString(Constants.KEY_IMAGE), Base64.DEFAULT);
         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-        //binding.imageProfile.setImageBitmap(bitmap);
     }
 
     private void showToast(String message) {
@@ -97,7 +78,6 @@ public class Chat extends Fragment implements ConversationListener {
                 .whereEqualTo(Constants.KEY_RECEIVER_ID, preferenceManager.getString(Constants.KEY_USER_ID))
                 .addSnapshotListener(eventListener);
     }
-
 
     private final EventListener<QuerySnapshot> eventListener = (value, error) -> {
         if (error != null) {
@@ -155,10 +135,8 @@ public class Chat extends Fragment implements ConversationListener {
                         preferenceManager.getString(Constants.KEY_USER_ID)
                 );
         documentReference.update(Constants.KEY_FCM_TOKEN, token)
-                .addOnFailureListener(e -> showToast("Unable ti update token"));
+                .addOnFailureListener(e -> showToast("Unable to update token"));
     }
-
-
 
     @Override
     public void onConversationClicked(User user) {
